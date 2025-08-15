@@ -1068,6 +1068,1160 @@
                 endDate: endDate
             };
             
+            // Deactivate all existing elections first
+            currentElections.forEach(election => {
+                if (election.status === 'active') {
+                    election.status = 'completed';
+                }
+            });
+            
+            // Add to elections array and save to storage
+            currentElections.push(newElection);
+            LocalStorageManager.saveElections(currentElections);
+            
+            // Refresh global elections variable
+            elections = currentElections;
+            currentElection = newElection; // Set the new election as current
+            
+            // Update all displays
+            updateElectionTable();
+            updateVotingInterface();
+            refreshAdminData();
+            closeCreateElectionModal();
+            alert('Election created successfully!');
+        });
+
+        function downloadCSV() {
+            const votes = LocalStorageManager.getVotes();
+            
+            if (votes.length === 0) {
+                alert('No votes to export');
+                return;
+            }
+            
+            let csvContent = "Election ID,Election Title,Candidate,Voter Name,Matric Number,Wallet Address,Transaction ID,Timestamp\n";
+            
+            votes.forEach(vote => {
+                const election = elections.find(e => e.id === vote.electionId);
+                const electionTitle = election ? election.title : 'Unknown Election';
+                
+                csvContent += `${vote.electionId},"${electionTitle}","${vote.candidateName}","${vote.voterName}",${vote.matric},${vote.walletAddress},${vote.transactionId},${new Date(vote.timestamp).toLocaleString()}\n`;
+            });
+            
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `election_results_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        function verifyWinner() {
+            if (!currentElection || !currentElection.candidates || currentElection.candidates.length === 0) {
+                alert('No active election found');
+                return;
+            }
+            
+            const candidates = currentElection.candidates;
+            const maxVotes = Math.max(...candidates.map(c => c.votes || 0));
+            const winner = candidates.find(c => (c.votes || 0) === maxVotes);
+            
+            if (!winner || maxVotes === 0) {
+                alert('No votes have been cast yet');
+                return;
+            }
+            
+            const winnersCount = candidates.filter(c => (c.votes || 0) === maxVotes).length;
+            
+            if (winnersCount > 1) {
+                alert(`There is a tie! Multiple candidates have ${maxVotes} votes each.`);
+            } else {
+                alert(`Winner verified: ${winner.name} with ${maxVotes} votes. Results have been locked on the blockchain.`);
+            }
+        }
+
+        function updateElectionTable() {
+            const tbody = document.getElementById('electionTableBody');
+            tbody.innerHTML = '';
+            
+            // Refresh elections from storage
+            elections = LocalStorageManager.getElections();
+            
+            if (elections.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="border border-gray-200 px-4 py-3 text-center text-gray-500">No elections available</td></tr>';
+                return;
+            }
+            
+            elections.forEach(election => {
+                const statusColor = election.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800';
+                const totalVotes = election.totalVotes || 0;
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="border border-gray-200 px-4 py-3">${election.title}</td>
+                    <td class="border border-gray-200 px-4 py-3">
+                        <span class="${statusColor} px-2 py-1 rounded-full text-xs">${election.status}</span>
+                    </td>
+                    <td class="border border-gray-200 px-4 py-3">${totalVotes}</td>
+                    <td class="border border-gray-200 px-4 py-3">
+                        <button onclick="deleteElection(${election.id})" class="text-red-600 hover:text-red-800 text-sm">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function deleteElection(electionId) {
+            if (confirm('Are you sure you want to delete this election? This will also delete all associated votes.')) {
+                // Remove election from storage
+                elections = elections.filter(e => e.id !== electionId);
+                LocalStorageManager.saveElections(elections);
+                
+                // Remove associated votes
+                const votes = LocalStorageManager.getVotes();
+                const filteredVotes = votes.filter(v => v.electionId !== electionId);
+                LocalStorageManager.saveVotes(filteredVotes);
+                
+                // Update current election if it was deleted
+                currentElection = elections.find(e => e.status === 'active') || null;
+                
+                // Update all displays
+                updateElectionTable();
+                updateVotingInterface();
+                refreshAdminData();
+                alert('Election deleted successfully!');
+            }
+        }
+
+        // Utility functions
+        function generateWalletAddress() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let result = '';
+            for (let i = 0; i < 44; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+
+        function generateTransactionId() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let result = '';
+            for (let i = 0; i < 64; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+
+        function goBackToLogin() {
+            document.getElementById('votingSection').classList.add('hidden');
+            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('voteConfirmation').classList.add('hidden');
+            
+            // Reset user state
+            currentUser = null;
+            walletConnected = false;
+            hasVoted = false;
+            document.getElementById('matricInput').value = '';
+            document.getElementById('matricStatus').className = 'mt-2 text-sm hidden';
+            document.getElementById('walletInfo').classList.add('hidden');
+            const connectBtn = document.getElementById('connectWalletBtn');
+            connectBtn.disabled = true;
+            connectBtn.className = 'w-full bg-gray-300 text-gray-500 py-3 rounded-lg font-medium cursor-not-allowed transition-all';
+            connectBtn.textContent = '🔒 Verify Matric First';
+        }
+
+        // Initialize voting section on page load
+        updateVotingInterface();
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96fad1250283cd2e',t:'MTc1NTI4MzE5MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
+        </div>
+
+        <!-- Voting Section -->
+        <div id="votingSection" class="hidden">
+            <div id="noElectionsMessage" class="hidden text-center py-16">
+                <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <span class="text-4xl text-gray-400">📭</span>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">No Elections Available</h2>
+                <p class="text-gray-600 mb-6">There are currently no active elections. Please check back later.</p>
+                <button onclick="goBackToLogin()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium">
+                    Back to Login
+                </button>
+            </div>
+
+            <div id="activeElectionContent">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-2">Current Election</h2>
+                    <div class="flex items-center justify-center space-x-4 text-sm text-gray-600">
+                        <span id="electionStatus" class="bg-green-100 text-green-800 px-3 py-1 rounded-full font-medium">
+                            🟢 LIVE
+                        </span>
+                        <span id="totalVotes" class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-medium">
+                            📊 Total Votes: 0
+                        </span>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl card-shadow p-6 mb-8">
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Student Union President Election 2024</h3>
+                    <p class="text-gray-600 mb-4">Choose your preferred candidate for the next Student Union President. Your vote is secured on the Solana blockchain.</p>
+                    <div class="flex items-center space-x-4 text-sm text-gray-500">
+                        <span>⏰ Ends: Dec 15, 2024 11:59 PM</span>
+                        <span>🔐 Blockchain Secured</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Candidates Grid -->
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Candidate 1 -->
+                <div class="bg-white rounded-2xl card-shadow overflow-hidden">
+                    <div class="h-48 bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+                        <span class="text-6xl text-white">👨‍🎓</span>
+                    </div>
+                    <div class="p-6">
+                        <h4 class="text-lg font-bold text-gray-800 mb-2">Alex Johnson</h4>
+                        <p class="text-gray-600 text-sm mb-4">Computer Science • Final Year</p>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-2xl font-bold text-blue-600" id="votes-1">0</span>
+                            <span class="text-sm text-gray-500">votes</span>
+                        </div>
+                        <button onclick="castVote(1, 'Alex Johnson')" 
+                                class="vote-button w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition-all">
+                            Vote for Alex
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Candidate 2 -->
+                <div class="bg-white rounded-2xl card-shadow overflow-hidden">
+                    <div class="h-48 bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center">
+                        <span class="text-6xl text-white">👩‍🎓</span>
+                    </div>
+                    <div class="p-6">
+                        <h4 class="text-lg font-bold text-gray-800 mb-2">Sarah Williams</h4>
+                        <p class="text-gray-600 text-sm mb-4">Business Admin • Final Year</p>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-2xl font-bold text-purple-600" id="votes-2">0</span>
+                            <span class="text-sm text-gray-500">votes</span>
+                        </div>
+                        <button onclick="castVote(2, 'Sarah Williams')" 
+                                class="vote-button w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg font-medium transition-all">
+                            Vote for Sarah
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Candidate 3 -->
+                <div class="bg-white rounded-2xl card-shadow overflow-hidden">
+                    <div class="h-48 bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
+                        <span class="text-6xl text-white">👨‍🎓</span>
+                    </div>
+                    <div class="p-6">
+                        <h4 class="text-lg font-bold text-gray-800 mb-2">Michael Chen</h4>
+                        <p class="text-gray-600 text-sm mb-4">Engineering • Final Year</p>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-2xl font-bold text-green-600" id="votes-3">0</span>
+                            <span class="text-sm text-gray-500">votes</span>
+                        </div>
+                        <button onclick="castVote(3, 'Michael Chen')" 
+                                class="vote-button w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium transition-all">
+                            Vote for Michael
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vote Confirmation -->
+            <div id="voteConfirmation" class="hidden bg-green-50 border border-green-200 rounded-2xl p-6">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-2xl text-white">✅</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-green-800 mb-2">Vote Cast Successfully!</h3>
+                    <p class="text-green-700 mb-4">Your vote has been recorded on the Solana blockchain.</p>
+                    <div class="bg-white rounded-lg p-4 text-left">
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <span class="text-gray-500">Candidate:</span>
+                                <p id="votedCandidate" class="font-medium"></p>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Transaction ID:</span>
+                                <p id="transactionId" class="font-mono text-xs break-all"></p>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Timestamp:</span>
+                                <p id="voteTimestamp" class="font-medium"></p>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Status:</span>
+                                <p class="text-green-600 font-medium">✅ Confirmed</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Panel -->
+        <div id="adminPanel" class="hidden">
+            <div class="bg-white rounded-2xl card-shadow p-8">
+                <div class="flex items-center justify-between mb-8">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800">Admin Panel</h2>
+                        <p class="text-gray-600">Manage elections and view voting data</p>
+                    </div>
+                    <button id="closeAdminBtn" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
+                        Close
+                    </button>
+                </div>
+
+                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-blue-50 rounded-lg p-4">
+                        <div class="text-2xl font-bold text-blue-600">247</div>
+                        <div class="text-sm text-blue-800">Total Votes Cast</div>
+                    </div>
+                    <div class="bg-green-50 rounded-lg p-4">
+                        <div class="text-2xl font-bold text-green-600">1,234</div>
+                        <div class="text-sm text-green-800">Registered Students</div>
+                    </div>
+                    <div class="bg-purple-50 rounded-lg p-4">
+                        <div class="text-2xl font-bold text-purple-600">3</div>
+                        <div class="text-sm text-purple-800">Active Elections</div>
+                    </div>
+                    <div class="bg-orange-50 rounded-lg p-4">
+                        <div class="text-2xl font-bold text-orange-600">89%</div>
+                        <div class="text-sm text-orange-800">Participation Rate</div>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="flex space-x-4">
+                        <button onclick="createElection()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium">
+                            ➕ Create Election
+                        </button>
+                        <button onclick="downloadCSV()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium">
+                            📊 Download CSV
+                        </button>
+                        <button onclick="verifyWinner()" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium">
+                            🏆 Verify Winner
+                        </button>
+                    </div>
+
+                    <!-- Election Management Table -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full border-collapse border border-gray-200 rounded-lg">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="border border-gray-200 px-4 py-3 text-left text-sm font-medium text-gray-700">Election</th>
+                                    <th class="border border-gray-200 px-4 py-3 text-left text-sm font-medium text-gray-700">Status</th>
+                                    <th class="border border-gray-200 px-4 py-3 text-left text-sm font-medium text-gray-700">Votes</th>
+                                    <th class="border border-gray-200 px-4 py-3 text-left text-sm font-medium text-gray-700">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="electionTableBody">
+                                <!-- Elections will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Modal -->
+    <div id="loadingModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-2xl p-8 text-center">
+            <div class="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+            <h3 class="text-lg font-bold text-gray-800 mb-2">Processing Vote</h3>
+            <p class="text-gray-600">Confirming transaction on Solana blockchain...</p>
+        </div>
+    </div>
+
+    <!-- Create Election Modal -->
+    <div id="createElectionModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-2xl font-bold text-gray-800">Create New Election</h2>
+                    <button onclick="closeCreateElectionModal()" class="text-gray-500 hover:text-gray-700">
+                        <span class="text-2xl">×</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                <form id="createElectionForm" class="space-y-6">
+                    <!-- Election Details -->
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Election Title</label>
+                            <input type="text" id="electionTitle" value="Student Union President Election 2024" 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Election Level</label>
+                            <select id="electionLevel" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="university">University Wide</option>
+                                <option value="faculty">Faculty Level</option>
+                                <option value="department">Department Level</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                        <textarea id="electionDescription" rows="3" 
+                                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">Choose your preferred candidate for the next Student Union President. Your vote is secured on the Solana blockchain.</textarea>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Start Date & Time</label>
+                            <input type="datetime-local" id="electionStartDate" 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">End Date & Time</label>
+                            <input type="datetime-local" id="electionEndDate" 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                    </div>
+
+                    <!-- Candidates Section -->
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-bold text-gray-800">Candidates</h3>
+                            <button type="button" onclick="addCandidate()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                                + Add Candidate
+                            </button>
+                        </div>
+                        
+                        <div id="candidatesContainer" class="space-y-6">
+                            <!-- Candidate 1 -->
+                            <div class="candidate-form bg-gray-50 rounded-lg p-4">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h4 class="font-medium text-gray-800">Candidate 1</h4>
+                                    <button type="button" onclick="removeCandidate(this)" class="text-red-600 hover:text-red-800 text-sm">Remove</button>
+                                </div>
+                                <div class="grid md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                                        <input type="text" name="candidateName" value="Alex Johnson" 
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                                        <input type="text" name="candidateDepartment" value="Computer Science" 
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Level</label>
+                                        <select name="candidateLevel" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                            <option value="Final Year" selected>Final Year</option>
+                                            <option value="Third Year">Third Year</option>
+                                            <option value="Second Year">Second Year</option>
+                                            <option value="First Year">First Year</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Avatar</label>
+                                        <select name="candidateAvatar" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                            <option value="👨‍🎓" selected>👨‍🎓 Male Graduate</option>
+                                            <option value="👩‍🎓">👩‍🎓 Female Graduate</option>
+                                            <option value="🧑‍🎓">🧑‍🎓 Graduate</option>
+                                            <option value="👨‍💼">👨‍💼 Male Professional</option>
+                                            <option value="👩‍💼">👩‍💼 Female Professional</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Background Color</label>
+                                    <select name="candidateColor" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                        <option value="blue" selected>Blue</option>
+                                        <option value="purple">Purple</option>
+                                        <option value="green">Green</option>
+                                        <option value="red">Red</option>
+                                        <option value="orange">Orange</option>
+                                        <option value="indigo">Indigo</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Candidate 2 -->
+                            <div class="candidate-form bg-gray-50 rounded-lg p-4">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h4 class="font-medium text-gray-800">Candidate 2</h4>
+                                    <button type="button" onclick="removeCandidate(this)" class="text-red-600 hover:text-red-800 text-sm">Remove</button>
+                                </div>
+                                <div class="grid md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                                        <input type="text" name="candidateName" value="Sarah Williams" 
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                                        <input type="text" name="candidateDepartment" value="Business Admin" 
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Level</label>
+                                        <select name="candidateLevel" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                            <option value="Final Year" selected>Final Year</option>
+                                            <option value="Third Year">Third Year</option>
+                                            <option value="Second Year">Second Year</option>
+                                            <option value="First Year">First Year</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Avatar</label>
+                                        <select name="candidateAvatar" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                            <option value="👨‍🎓">👨‍🎓 Male Graduate</option>
+                                            <option value="👩‍🎓" selected>👩‍🎓 Female Graduate</option>
+                                            <option value="🧑‍🎓">🧑‍🎓 Graduate</option>
+                                            <option value="👨‍💼">👨‍💼 Male Professional</option>
+                                            <option value="👩‍💼">👩‍💼 Female Professional</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Background Color</label>
+                                    <select name="candidateColor" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                        <option value="blue">Blue</option>
+                                        <option value="purple" selected>Purple</option>
+                                        <option value="green">Green</option>
+                                        <option value="red">Red</option>
+                                        <option value="orange">Orange</option>
+                                        <option value="indigo">Indigo</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Candidate 3 -->
+                            <div class="candidate-form bg-gray-50 rounded-lg p-4">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h4 class="font-medium text-gray-800">Candidate 3</h4>
+                                    <button type="button" onclick="removeCandidate(this)" class="text-red-600 hover:text-red-800 text-sm">Remove</button>
+                                </div>
+                                <div class="grid md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                                        <input type="text" name="candidateName" value="Michael Chen" 
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                                        <input type="text" name="candidateDepartment" value="Engineering" 
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Level</label>
+                                        <select name="candidateLevel" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                            <option value="Final Year" selected>Final Year</option>
+                                            <option value="Third Year">Third Year</option>
+                                            <option value="Second Year">Second Year</option>
+                                            <option value="First Year">First Year</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Avatar</label>
+                                        <select name="candidateAvatar" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                            <option value="👨‍🎓" selected>👨‍🎓 Male Graduate</option>
+                                            <option value="👩‍🎓">👩‍🎓 Female Graduate</option>
+                                            <option value="🧑‍🎓">🧑‍🎓 Graduate</option>
+                                            <option value="👨‍💼">👨‍💼 Male Professional</option>
+                                            <option value="👩‍💼">👩‍💼 Female Professional</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Background Color</label>
+                                    <select name="candidateColor" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                        <option value="blue">Blue</option>
+                                        <option value="purple">Purple</option>
+                                        <option value="green" selected>Green</option>
+                                        <option value="red">Red</option>
+                                        <option value="orange">Orange</option>
+                                        <option value="indigo">Indigo</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                        <button type="button" onclick="closeCreateElectionModal()" 
+                                class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium">
+                            Cancel
+                        </button>
+                        <button type="submit" 
+                                class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium">
+                            Create Election
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Local Storage Management
+        class LocalStorageManager {
+            static init() {
+                // Initialize default data if not exists
+                if (!localStorage.getItem('macvotes_students')) {
+                    const defaultStudents = [
+                        { matric: 'DE.2021/4311', name: 'John Doe', email: 'john@university.edu', department: 'Computer Science' },
+                        { matric: 'DE.2021/4312', name: 'Jane Smith', email: 'jane@university.edu', department: 'Business Admin' },
+                        { matric: 'DE.2021/4313', name: 'Bob Wilson', email: 'bob@university.edu', department: 'Engineering' },
+                        { matric: 'DE.2021/0001', name: 'Admin User', email: 'admin@university.edu', department: 'Administration', isAdmin: true }
+                    ];
+                    localStorage.setItem('macvotes_students', JSON.stringify(defaultStudents));
+                }
+
+                if (!localStorage.getItem('macvotes_elections')) {
+                    const defaultElections = [
+                        { 
+                            id: 1, 
+                            title: 'Student Union President Election 2024', 
+                            description: 'Choose your preferred candidate for the next Student Union President. Your vote is secured on the Solana blockchain.',
+                            level: 'university',
+                            status: 'active', 
+                            totalVotes: 56,
+                            startDate: new Date().toISOString(),
+                            endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+                            candidates: [
+                                { id: 1, name: 'Alex Johnson', department: 'Computer Science', level: 'Final Year', avatar: '👨‍🎓', color: 'blue', votes: 15 },
+                                { id: 2, name: 'Sarah Williams', department: 'Business Admin', level: 'Final Year', avatar: '👩‍🎓', color: 'purple', votes: 23 },
+                                { id: 3, name: 'Michael Chen', department: 'Engineering', level: 'Final Year', avatar: '👨‍🎓', color: 'green', votes: 18 }
+                            ]
+                        }
+                    ];
+                    localStorage.setItem('macvotes_elections', JSON.stringify(defaultElections));
+                }
+
+                if (!localStorage.getItem('macvotes_votes')) {
+                    localStorage.setItem('macvotes_votes', JSON.stringify([]));
+                }
+            }
+
+            static getStudents() {
+                return JSON.parse(localStorage.getItem('macvotes_students') || '[]');
+            }
+
+            static getElections() {
+                return JSON.parse(localStorage.getItem('macvotes_elections') || '[]');
+            }
+
+            static getVotes() {
+                return JSON.parse(localStorage.getItem('macvotes_votes') || '[]');
+            }
+
+            static saveElections(elections) {
+                localStorage.setItem('macvotes_elections', JSON.stringify(elections));
+            }
+
+            static saveVotes(votes) {
+                localStorage.setItem('macvotes_votes', JSON.stringify(votes));
+            }
+
+            static addVote(vote) {
+                const votes = this.getVotes();
+                votes.push(vote);
+                this.saveVotes(votes);
+            }
+
+            static hasUserVoted(matric, electionId) {
+                const votes = this.getVotes();
+                return votes.some(vote => vote.matric === matric && vote.electionId === electionId);
+            }
+        }
+
+        // Initialize local storage
+        LocalStorageManager.init();
+
+        // Load data from local storage
+        const students = LocalStorageManager.getStudents();
+        let currentUser = null;
+        let walletConnected = false;
+        let hasVoted = false;
+        let isAdminAuthenticated = false;
+        let elections = LocalStorageManager.getElections();
+        let currentElection = elections.find(e => e.status === 'active') || null;
+
+        // Initialize displays
+        updateVoteDisplay();
+        updateVotingInterface();
+
+        // Matric number validation
+        document.getElementById('matricInput').addEventListener('input', function(e) {
+            const matric = e.target.value.trim();
+            const statusDiv = document.getElementById('matricStatus');
+            const connectBtn = document.getElementById('connectWalletBtn');
+            
+            if (matric.length < 3) {
+                statusDiv.className = 'mt-2 text-sm hidden';
+                connectBtn.disabled = true;
+                connectBtn.className = 'w-full bg-gray-300 text-gray-500 py-3 rounded-lg font-medium cursor-not-allowed transition-all';
+                connectBtn.textContent = '🔒 Verify Matric First';
+                return;
+            }
+
+            const student = students.find(s => s.matric === matric);
+            
+            if (student) {
+                currentUser = student;
+                statusDiv.className = 'mt-2 text-sm text-green-600';
+                statusDiv.innerHTML = `✅ Verified: ${student.name} (${student.department})`;
+                connectBtn.disabled = false;
+                connectBtn.className = 'w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition-all';
+                connectBtn.textContent = '🔗 Connect Solana Wallet';
+            } else {
+                statusDiv.className = 'mt-2 text-sm text-red-600';
+                statusDiv.innerHTML = '❌ Matriculation number not found';
+                connectBtn.disabled = true;
+                connectBtn.className = 'w-full bg-gray-300 text-gray-500 py-3 rounded-lg font-medium cursor-not-allowed transition-all';
+                connectBtn.textContent = '🔒 Invalid Matric Number';
+            }
+        });
+
+        // Wallet connection
+        document.getElementById('connectWalletBtn').addEventListener('click', async function() {
+            if (!currentUser) return;
+            
+            try {
+                // Simulate wallet connection
+                const walletAddress = generateWalletAddress();
+                
+                document.getElementById('walletInfo').classList.remove('hidden');
+                document.getElementById('walletAddress').textContent = walletAddress;
+                
+                walletConnected = true;
+                
+                // Check if user has already voted
+                if (currentElection) {
+                    hasVoted = LocalStorageManager.hasUserVoted(currentUser.matric, currentElection.id);
+                }
+                
+                // Show voting section
+                setTimeout(() => {
+                    document.getElementById('loginSection').classList.add('hidden');
+                    document.getElementById('votingSection').classList.remove('hidden');
+                    updateVotingInterface();
+                }, 1000);
+                
+            } catch (error) {
+                alert('Failed to connect wallet. Please try again.');
+            }
+        });
+
+        // Vote casting function
+        async function castVote(candidateId, candidateName) {
+            if (!walletConnected) {
+                alert('Please connect your wallet first');
+                return;
+            }
+            
+            if (!currentElection) {
+                alert('No active election found');
+                return;
+            }
+            
+            if (hasVoted || LocalStorageManager.hasUserVoted(currentUser.matric, currentElection.id)) {
+                alert('You have already voted in this election');
+                return;
+            }
+
+            // Show loading modal
+            document.getElementById('loadingModal').classList.remove('hidden');
+            
+            try {
+                // Simulate blockchain transaction
+                await new Promise(resolve => setTimeout(resolve, 3000));
+                
+                // Update candidate votes in current election
+                const candidate = currentElection.candidates.find(c => c.id === candidateId);
+                if (candidate) {
+                    candidate.votes++;
+                    currentElection.totalVotes++;
+                }
+                
+                // Save vote record
+                const voteRecord = {
+                    id: Date.now(),
+                    electionId: currentElection.id,
+                    candidateId: candidateId,
+                    candidateName: candidateName,
+                    voterName: currentUser.name,
+                    matric: currentUser.matric,
+                    walletAddress: generateWalletAddress(),
+                    transactionId: generateTransactionId(),
+                    timestamp: new Date().toISOString()
+                };
+                
+                LocalStorageManager.addVote(voteRecord);
+                
+                // Update elections in storage
+                elections = LocalStorageManager.getElections();
+                const electionIndex = elections.findIndex(e => e.id === currentElection.id);
+                if (electionIndex !== -1) {
+                    elections[electionIndex] = currentElection;
+                    LocalStorageManager.saveElections(elections);
+                }
+                
+                // Update displays
+                updateVoteDisplay();
+                
+                // Show confirmation
+                document.getElementById('votedCandidate').textContent = candidateName;
+                document.getElementById('transactionId').textContent = voteRecord.transactionId;
+                document.getElementById('voteTimestamp').textContent = new Date().toLocaleString();
+                
+                document.getElementById('loadingModal').classList.add('hidden');
+                document.getElementById('voteConfirmation').classList.remove('hidden');
+                
+                hasVoted = true;
+                updateVotingInterface();
+                
+            } catch (error) {
+                document.getElementById('loadingModal').classList.add('hidden');
+                alert('Failed to cast vote. Please try again.');
+            }
+        }
+
+        // Update vote display
+        function updateVoteDisplay() {
+            if (!currentElection || !currentElection.candidates) return;
+            
+            currentElection.candidates.forEach((candidate, index) => {
+                const voteElement = document.getElementById(`votes-${candidate.id}`);
+                if (voteElement) {
+                    voteElement.textContent = candidate.votes || 0;
+                }
+            });
+            
+            const totalVotesElement = document.getElementById('totalVotes');
+            if (totalVotesElement) {
+                totalVotesElement.textContent = `📊 Total Votes: ${currentElection.totalVotes || 0}`;
+            }
+        }
+
+        // Update voting interface based on current election
+        function updateVotingInterface() {
+            const votingSection = document.getElementById('votingSection');
+            const noElectionsMessage = document.getElementById('noElectionsMessage');
+            const activeElectionContent = document.getElementById('activeElectionContent');
+            
+            // Refresh current election from storage
+            elections = LocalStorageManager.getElections();
+            currentElection = elections.find(e => e.status === 'active') || null;
+            
+            if (!currentElection) {
+                if (noElectionsMessage) noElectionsMessage.classList.remove('hidden');
+                if (activeElectionContent) activeElectionContent.classList.add('hidden');
+                // Clear candidates grid when no election exists
+                const candidatesContainer = document.querySelector('.grid.md\\:grid-cols-2.lg\\:grid-cols-3.gap-6.mb-8');
+                if (candidatesContainer) {
+                    candidatesContainer.innerHTML = '';
+                }
+                return;
+            }
+            
+            if (noElectionsMessage) noElectionsMessage.classList.add('hidden');
+            if (activeElectionContent) activeElectionContent.classList.remove('hidden');
+            
+            // Update election title and description
+            const titleElement = document.querySelector('#activeElectionContent h3');
+            const descElement = document.querySelector('#activeElectionContent p');
+            if (titleElement) titleElement.textContent = currentElection.title;
+            if (descElement) descElement.textContent = currentElection.description;
+            
+            // Update candidates grid
+            updateCandidatesGrid();
+            updateVoteDisplay();
+            
+            // Update vote buttons state
+            if (currentUser && hasVoted) {
+                disableVoteButtons();
+            }
+        }
+
+        // Update candidates grid dynamically
+        function updateCandidatesGrid() {
+            if (!currentElection || !currentElection.candidates) return;
+            
+            const candidatesContainer = document.querySelector('.grid.md\\:grid-cols-2.lg\\:grid-cols-3.gap-6.mb-8');
+            if (!candidatesContainer) return;
+            
+            candidatesContainer.innerHTML = '';
+            
+            currentElection.candidates.forEach(candidate => {
+                const candidateCard = createCandidateCard(candidate);
+                candidatesContainer.appendChild(candidateCard);
+            });
+        }
+
+        // Create candidate card element
+        function createCandidateCard(candidate) {
+            const card = document.createElement('div');
+            card.className = 'bg-white rounded-2xl card-shadow overflow-hidden';
+            
+            const colorClasses = {
+                blue: 'from-blue-400 to-blue-600',
+                purple: 'from-purple-400 to-purple-600',
+                green: 'from-green-400 to-green-600',
+                red: 'from-red-400 to-red-600',
+                orange: 'from-orange-400 to-orange-600',
+                indigo: 'from-indigo-400 to-indigo-600'
+            };
+            
+            const buttonColorClasses = {
+                blue: 'bg-blue-600 hover:bg-blue-700',
+                purple: 'bg-purple-600 hover:bg-purple-700',
+                green: 'bg-green-600 hover:bg-green-700',
+                red: 'bg-red-600 hover:bg-red-700',
+                orange: 'bg-orange-600 hover:bg-orange-700',
+                indigo: 'bg-indigo-600 hover:bg-indigo-700'
+            };
+            
+            const voteCountColorClasses = {
+                blue: 'text-blue-600',
+                purple: 'text-purple-600',
+                green: 'text-green-600',
+                red: 'text-red-600',
+                orange: 'text-orange-600',
+                indigo: 'text-indigo-600'
+            };
+            
+            card.innerHTML = `
+                <div class="h-48 bg-gradient-to-br ${colorClasses[candidate.color] || colorClasses.blue} flex items-center justify-center">
+                    <span class="text-6xl text-white">${candidate.avatar || '👨‍🎓'}</span>
+                </div>
+                <div class="p-6">
+                    <h4 class="text-lg font-bold text-gray-800 mb-2">${candidate.name}</h4>
+                    <p class="text-gray-600 text-sm mb-4">${candidate.department} • ${candidate.level}</p>
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-2xl font-bold ${voteCountColorClasses[candidate.color] || voteCountColorClasses.blue}" id="votes-${candidate.id}">${candidate.votes || 0}</span>
+                        <span class="text-sm text-gray-500">votes</span>
+                    </div>
+                    <button onclick="castVote(${candidate.id}, '${candidate.name}')" 
+                            class="vote-button w-full ${buttonColorClasses[candidate.color] || buttonColorClasses.blue} text-white py-3 rounded-lg font-medium transition-all">
+                        Vote for ${candidate.name.split(' ')[0]}
+                    </button>
+                </div>
+            `;
+            
+            return card;
+        }
+
+        // Disable vote buttons after voting
+        function disableVoteButtons() {
+            const voteButtons = document.querySelectorAll('.vote-button');
+            voteButtons.forEach(btn => {
+                btn.disabled = true;
+                btn.className = btn.className.replace(/bg-\w+-600 hover:bg-\w+-700/g, 'bg-gray-300');
+                btn.textContent = 'Vote Cast';
+            });
+        }
+
+        // Admin panel functions
+        document.getElementById('adminBtn').addEventListener('click', function() {
+            if (!isAdminAuthenticated) {
+                const password = prompt('Enter admin password:');
+                if (password === 'admin123') {
+                    isAdminAuthenticated = true;
+                    showAdminPanel();
+                } else {
+                    alert('Invalid admin password!');
+                    return;
+                }
+            } else {
+                showAdminPanel();
+            }
+        });
+
+        function showAdminPanel() {
+            document.getElementById('adminPanel').classList.remove('hidden');
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('votingSection').classList.add('hidden');
+            refreshAdminData();
+            updateElectionTable();
+        }
+
+        function refreshAdminData() {
+            // Refresh elections from storage
+            elections = LocalStorageManager.getElections();
+            
+            // Update admin statistics
+            const votes = LocalStorageManager.getVotes();
+            const totalVotes = votes.length;
+            const totalStudents = LocalStorageManager.getStudents().length;
+            const activeElections = elections.filter(e => e.status === 'active').length;
+            const participationRate = totalStudents > 0 ? Math.round((totalVotes / totalStudents) * 100) : 0;
+            
+            // Update stat cards
+            document.querySelector('.bg-blue-50 .text-2xl').textContent = totalVotes;
+            document.querySelector('.bg-green-50 .text-2xl').textContent = totalStudents;
+            document.querySelector('.bg-purple-50 .text-2xl').textContent = activeElections;
+            document.querySelector('.bg-orange-50 .text-2xl').textContent = `${participationRate}%`;
+        }
+
+        document.getElementById('closeAdminBtn').addEventListener('click', function() {
+            document.getElementById('adminPanel').classList.add('hidden');
+            document.getElementById('loginSection').classList.remove('hidden');
+        });
+
+        function createElection() {
+            // Set default dates
+            const now = new Date();
+            const tomorrow = new Date(now);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            
+            document.getElementById('electionStartDate').value = now.toISOString().slice(0, 16);
+            document.getElementById('electionEndDate').value = tomorrow.toISOString().slice(0, 16);
+            
+            // Show modal
+            document.getElementById('createElectionModal').classList.remove('hidden');
+        }
+
+        function closeCreateElectionModal() {
+            document.getElementById('createElectionModal').classList.add('hidden');
+        }
+
+        function addCandidate() {
+            const container = document.getElementById('candidatesContainer');
+            const candidateCount = container.children.length + 1;
+            
+            const candidateForm = document.createElement('div');
+            candidateForm.className = 'candidate-form bg-gray-50 rounded-lg p-4';
+            candidateForm.innerHTML = `
+                <div class="flex items-center justify-between mb-4">
+                    <h4 class="font-medium text-gray-800">Candidate ${candidateCount}</h4>
+                    <button type="button" onclick="removeCandidate(this)" class="text-red-600 hover:text-red-800 text-sm">Remove</button>
+                </div>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                        <input type="text" name="candidateName" value="" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                        <input type="text" name="candidateDepartment" value="" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Level</label>
+                        <select name="candidateLevel" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="Final Year">Final Year</option>
+                            <option value="Third Year">Third Year</option>
+                            <option value="Second Year">Second Year</option>
+                            <option value="First Year">First Year</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Avatar</label>
+                        <select name="candidateAvatar" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="👨‍🎓">👨‍🎓 Male Graduate</option>
+                            <option value="👩‍🎓">👩‍🎓 Female Graduate</option>
+                            <option value="🧑‍🎓">🧑‍🎓 Graduate</option>
+                            <option value="👨‍💼">👨‍💼 Male Professional</option>
+                            <option value="👩‍💼">👩‍💼 Female Professional</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Background Color</label>
+                    <select name="candidateColor" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="blue">Blue</option>
+                        <option value="purple">Purple</option>
+                        <option value="green">Green</option>
+                        <option value="red">Red</option>
+                        <option value="orange">Orange</option>
+                        <option value="indigo">Indigo</option>
+                    </select>
+                </div>
+            `;
+            
+            container.appendChild(candidateForm);
+        }
+
+        function removeCandidate(button) {
+            const candidateForm = button.closest('.candidate-form');
+            const container = document.getElementById('candidatesContainer');
+            
+            if (container.children.length > 2) {
+                candidateForm.remove();
+                // Update candidate numbers
+                Array.from(container.children).forEach((form, index) => {
+                    const header = form.querySelector('h4');
+                    header.textContent = `Candidate ${index + 1}`;
+                });
+            } else {
+                alert('You must have at least 2 candidates');
+            }
+        }
+
+        // Handle form submission
+        document.getElementById('createElectionForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const title = document.getElementById('electionTitle').value;
+            const description = document.getElementById('electionDescription').value;
+            const level = document.getElementById('electionLevel').value;
+            const startDate = document.getElementById('electionStartDate').value;
+            const endDate = document.getElementById('electionEndDate').value;
+            
+            // Collect candidate data
+            const candidateForms = document.querySelectorAll('.candidate-form');
+            const candidates = [];
+            
+            candidateForms.forEach((form, index) => {
+                const name = form.querySelector('input[name="candidateName"]').value;
+                const department = form.querySelector('input[name="candidateDepartment"]').value;
+                const candidateLevel = form.querySelector('select[name="candidateLevel"]').value;
+                const avatar = form.querySelector('select[name="candidateAvatar"]').value;
+                const color = form.querySelector('select[name="candidateColor"]').value;
+                
+                if (name && department) {
+                    candidates.push({
+                        id: index + 1,
+                        name: name,
+                        department: department,
+                        level: candidateLevel,
+                        avatar: avatar,
+                        color: color,
+                        votes: 0
+                    });
+                }
+            });
+            
+            if (candidates.length < 2) {
+                alert('Please add at least 2 candidates with names and departments');
+                return;
+            }
+            
+            // Get current elections and generate new ID
+            const currentElections = LocalStorageManager.getElections();
+            const newId = Math.max(...currentElections.map(e => e.id), 0) + 1;
+            
+            const newElection = {
+                id: newId,
+                title: title,
+                description: description,
+                level: level,
+                status: 'active',
+                totalVotes: 0,
+                candidates: candidates,
+                startDate: startDate,
+                endDate: endDate
+            };
+            
             // Add to elections array and save to storage
             currentElections.push(newElection);
             LocalStorageManager.saveElections(currentElections);
