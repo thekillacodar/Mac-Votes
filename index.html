@@ -287,6 +287,234 @@
         </div>
     </div>
 
+    <!-- Create Election Modal -->
+    <div id="createElectionModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-2xl font-bold text-gray-800">Create New Election</h2>
+                    <button onclick="closeCreateElectionModal()" class="text-gray-500 hover:text-gray-700">
+                        <span class="text-2xl">×</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                <form id="createElectionForm" class="space-y-6">
+                    <!-- Election Details -->
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Election Title</label>
+                            <input type="text" id="electionTitle" value="Student Union President Election 2024" 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Election Level</label>
+                            <select id="electionLevel" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="university">University Wide</option>
+                                <option value="faculty">Faculty Level</option>
+                                <option value="department">Department Level</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                        <textarea id="electionDescription" rows="3" 
+                                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">Choose your preferred candidate for the next Student Union President. Your vote is secured on the Solana blockchain.</textarea>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Start Date & Time</label>
+                            <input type="datetime-local" id="electionStartDate" 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">End Date & Time</label>
+                            <input type="datetime-local" id="electionEndDate" 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                    </div>
+
+                    <!-- Candidates Section -->
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-bold text-gray-800">Candidates</h3>
+                            <button type="button" onclick="addCandidate()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                                + Add Candidate
+                            </button>
+                        </div>
+                        
+                        <div id="candidatesContainer" class="space-y-6">
+                            <!-- Candidate 1 -->
+                            <div class="candidate-form bg-gray-50 rounded-lg p-4">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h4 class="font-medium text-gray-800">Candidate 1</h4>
+                                    <button type="button" onclick="removeCandidate(this)" class="text-red-600 hover:text-red-800 text-sm">Remove</button>
+                                </div>
+                                <div class="grid md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                                        <input type="text" name="candidateName" value="Alex Johnson" 
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                                        <input type="text" name="candidateDepartment" value="Computer Science" 
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Level</label>
+                                        <select name="candidateLevel" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                            <option value="Final Year" selected>Final Year</option>
+                                            <option value="Third Year">Third Year</option>
+                                            <option value="Second Year">Second Year</option>
+                                            <option value="First Year">First Year</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Avatar</label>
+                                        <select name="candidateAvatar" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                            <option value="👨‍🎓" selected>👨‍🎓 Male Graduate</option>
+                                            <option value="👩‍🎓">👩‍🎓 Female Graduate</option>
+                                            <option value="🧑‍🎓">🧑‍🎓 Graduate</option>
+                                            <option value="👨‍💼">👨‍💼 Male Professional</option>
+                                            <option value="👩‍💼">👩‍💼 Female Professional</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Background Color</label>
+                                    <select name="candidateColor" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                        <option value="blue" selected>Blue</option>
+                                        <option value="purple">Purple</option>
+                                        <option value="green">Green</option>
+                                        <option value="red">Red</option>
+                                        <option value="orange">Orange</option>
+                                        <option value="indigo">Indigo</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Candidate 2 -->
+                            <div class="candidate-form bg-gray-50 rounded-lg p-4">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h4 class="font-medium text-gray-800">Candidate 2</h4>
+                                    <button type="button" onclick="removeCandidate(this)" class="text-red-600 hover:text-red-800 text-sm">Remove</button>
+                                </div>
+                                <div class="grid md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                                        <input type="text" name="candidateName" value="Sarah Williams" 
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                                        <input type="text" name="candidateDepartment" value="Business Admin" 
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Level</label>
+                                        <select name="candidateLevel" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                            <option value="Final Year" selected>Final Year</option>
+                                            <option value="Third Year">Third Year</option>
+                                            <option value="Second Year">Second Year</option>
+                                            <option value="First Year">First Year</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Avatar</label>
+                                        <select name="candidateAvatar" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                            <option value="👨‍🎓">👨‍🎓 Male Graduate</option>
+                                            <option value="👩‍🎓" selected>👩‍🎓 Female Graduate</option>
+                                            <option value="🧑‍🎓">🧑‍🎓 Graduate</option>
+                                            <option value="👨‍💼">👨‍💼 Male Professional</option>
+                                            <option value="👩‍💼">👩‍💼 Female Professional</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Background Color</label>
+                                    <select name="candidateColor" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                        <option value="blue">Blue</option>
+                                        <option value="purple" selected>Purple</option>
+                                        <option value="green">Green</option>
+                                        <option value="red">Red</option>
+                                        <option value="orange">Orange</option>
+                                        <option value="indigo">Indigo</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Candidate 3 -->
+                            <div class="candidate-form bg-gray-50 rounded-lg p-4">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h4 class="font-medium text-gray-800">Candidate 3</h4>
+                                    <button type="button" onclick="removeCandidate(this)" class="text-red-600 hover:text-red-800 text-sm">Remove</button>
+                                </div>
+                                <div class="grid md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                                        <input type="text" name="candidateName" value="Michael Chen" 
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                                        <input type="text" name="candidateDepartment" value="Engineering" 
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Level</label>
+                                        <select name="candidateLevel" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                            <option value="Final Year" selected>Final Year</option>
+                                            <option value="Third Year">Third Year</option>
+                                            <option value="Second Year">Second Year</option>
+                                            <option value="First Year">First Year</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Avatar</label>
+                                        <select name="candidateAvatar" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                            <option value="👨‍🎓" selected>👨‍🎓 Male Graduate</option>
+                                            <option value="👩‍🎓">👩‍🎓 Female Graduate</option>
+                                            <option value="🧑‍🎓">🧑‍🎓 Graduate</option>
+                                            <option value="👨‍💼">👨‍💼 Male Professional</option>
+                                            <option value="👩‍💼">👩‍💼 Female Professional</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Background Color</label>
+                                    <select name="candidateColor" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                        <option value="blue">Blue</option>
+                                        <option value="purple">Purple</option>
+                                        <option value="green" selected>Green</option>
+                                        <option value="red">Red</option>
+                                        <option value="orange">Orange</option>
+                                        <option value="indigo">Indigo</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                        <button type="button" onclick="closeCreateElectionModal()" 
+                                class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium">
+                            Cancel
+                        </button>
+                        <button type="submit" 
+                                class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium">
+                            Create Election
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Sample database simulation
         const students = [
@@ -452,18 +680,130 @@
         });
 
         function createElection() {
-            const title = prompt('Enter election title:');
-            if (!title) return;
+            // Set default dates
+            const now = new Date();
+            const tomorrow = new Date(now);
+            tomorrow.setDate(tomorrow.getDate() + 1);
             
-            const description = prompt('Enter election description:');
-            if (!description) return;
+            document.getElementById('electionStartDate').value = now.toISOString().slice(0, 16);
+            document.getElementById('electionEndDate').value = tomorrow.toISOString().slice(0, 16);
             
-            const candidatesInput = prompt('Enter candidate names (separated by commas):');
-            if (!candidatesInput) return;
+            // Show modal
+            document.getElementById('createElectionModal').classList.remove('hidden');
+        }
+
+        function closeCreateElectionModal() {
+            document.getElementById('createElectionModal').classList.add('hidden');
+        }
+
+        function addCandidate() {
+            const container = document.getElementById('candidatesContainer');
+            const candidateCount = container.children.length + 1;
             
-            const candidates = candidatesInput.split(',').map(c => c.trim()).filter(c => c);
+            const candidateForm = document.createElement('div');
+            candidateForm.className = 'candidate-form bg-gray-50 rounded-lg p-4';
+            candidateForm.innerHTML = `
+                <div class="flex items-center justify-between mb-4">
+                    <h4 class="font-medium text-gray-800">Candidate ${candidateCount}</h4>
+                    <button type="button" onclick="removeCandidate(this)" class="text-red-600 hover:text-red-800 text-sm">Remove</button>
+                </div>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                        <input type="text" name="candidateName" value="" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                        <input type="text" name="candidateDepartment" value="" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Level</label>
+                        <select name="candidateLevel" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="Final Year">Final Year</option>
+                            <option value="Third Year">Third Year</option>
+                            <option value="Second Year">Second Year</option>
+                            <option value="First Year">First Year</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Avatar</label>
+                        <select name="candidateAvatar" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="👨‍🎓">👨‍🎓 Male Graduate</option>
+                            <option value="👩‍🎓">👩‍🎓 Female Graduate</option>
+                            <option value="🧑‍🎓">🧑‍🎓 Graduate</option>
+                            <option value="👨‍💼">👨‍💼 Male Professional</option>
+                            <option value="👩‍💼">👩‍💼 Female Professional</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Background Color</label>
+                    <select name="candidateColor" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="blue">Blue</option>
+                        <option value="purple">Purple</option>
+                        <option value="green">Green</option>
+                        <option value="red">Red</option>
+                        <option value="orange">Orange</option>
+                        <option value="indigo">Indigo</option>
+                    </select>
+                </div>
+            `;
+            
+            container.appendChild(candidateForm);
+        }
+
+        function removeCandidate(button) {
+            const candidateForm = button.closest('.candidate-form');
+            const container = document.getElementById('candidatesContainer');
+            
+            if (container.children.length > 2) {
+                candidateForm.remove();
+                // Update candidate numbers
+                Array.from(container.children).forEach((form, index) => {
+                    const header = form.querySelector('h4');
+                    header.textContent = `Candidate ${index + 1}`;
+                });
+            } else {
+                alert('You must have at least 2 candidates');
+            }
+        }
+
+        // Handle form submission
+        document.getElementById('createElectionForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const title = document.getElementById('electionTitle').value;
+            const description = document.getElementById('electionDescription').value;
+            const level = document.getElementById('electionLevel').value;
+            const startDate = document.getElementById('electionStartDate').value;
+            const endDate = document.getElementById('electionEndDate').value;
+            
+            // Collect candidate data
+            const candidateForms = document.querySelectorAll('.candidate-form');
+            const candidates = [];
+            
+            candidateForms.forEach(form => {
+                const name = form.querySelector('input[name="candidateName"]').value;
+                const department = form.querySelector('input[name="candidateDepartment"]').value;
+                const candidateLevel = form.querySelector('select[name="candidateLevel"]').value;
+                const avatar = form.querySelector('select[name="candidateAvatar"]').value;
+                const color = form.querySelector('select[name="candidateColor"]').value;
+                
+                if (name && department) {
+                    candidates.push({
+                        name: name,
+                        department: department,
+                        level: candidateLevel,
+                        avatar: avatar,
+                        color: color
+                    });
+                }
+            });
+            
             if (candidates.length < 2) {
-                alert('Please enter at least 2 candidates');
+                alert('Please add at least 2 candidates with names and departments');
                 return;
             }
             
@@ -471,15 +811,20 @@
                 id: elections.length + 1,
                 title: title,
                 description: description,
+                level: level,
                 status: 'active',
                 votes: 0,
-                candidates: candidates
+                candidates: candidates,
+                startDate: startDate,
+                endDate: endDate
             };
             
             elections.push(newElection);
             updateElectionTable();
+            updateVotingSection();
+            closeCreateElectionModal();
             alert('Election created successfully!');
-        }
+        });
 
         function downloadCSV() {
             // Simulate CSV download
@@ -597,406 +942,5 @@
             }
         }, 5000);
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96fa9f4132fc8a0e',t:'MTc1NTI4MTE0Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
-</html>
-        </div>
-
-        <!-- Voting Section -->
-        <div id="votingSection" class="hidden">
-            <div class="text-center mb-8">
-                <h2 class="text-3xl font-bold text-gray-800 mb-2">Current Election</h2>
-                <div class="flex items-center justify-center space-x-4 text-sm text-gray-600">
-                    <span id="electionStatus" class="bg-green-100 text-green-800 px-3 py-1 rounded-full font-medium">
-                        🟢 LIVE
-                    </span>
-                    <span id="totalVotes" class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-medium">
-                        📊 Total Votes: 0
-                    </span>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-2xl card-shadow p-6 mb-8">
-                <h3 class="text-xl font-bold text-gray-800 mb-2">Student Union President Election 2024</h3>
-                <p class="text-gray-600 mb-4">Choose your preferred candidate for the next Student Union President. Your vote is secured on the Solana blockchain.</p>
-                <div class="flex items-center space-x-4 text-sm text-gray-500">
-                    <span>⏰ Ends: Dec 15, 2024 11:59 PM</span>
-                    <span>🔐 Blockchain Secured</span>
-                </div>
-            </div>
-
-            <!-- Candidates Grid -->
-            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                <!-- Candidate 1 -->
-                <div class="bg-white rounded-2xl card-shadow overflow-hidden">
-                    <div class="h-48 bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
-                        <span class="text-6xl text-white">👨‍🎓</span>
-                    </div>
-                    <div class="p-6">
-                        <h4 class="text-lg font-bold text-gray-800 mb-2">Alex Johnson</h4>
-                        <p class="text-gray-600 text-sm mb-4">Computer Science • Final Year</p>
-                        <div class="flex items-center justify-between mb-4">
-                            <span class="text-2xl font-bold text-blue-600" id="votes-1">0</span>
-                            <span class="text-sm text-gray-500">votes</span>
-                        </div>
-                        <button onclick="castVote(1, 'Alex Johnson')" 
-                                class="vote-button w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition-all">
-                            Vote for Alex
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Candidate 2 -->
-                <div class="bg-white rounded-2xl card-shadow overflow-hidden">
-                    <div class="h-48 bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center">
-                        <span class="text-6xl text-white">👩‍🎓</span>
-                    </div>
-                    <div class="p-6">
-                        <h4 class="text-lg font-bold text-gray-800 mb-2">Sarah Williams</h4>
-                        <p class="text-gray-600 text-sm mb-4">Business Admin • Final Year</p>
-                        <div class="flex items-center justify-between mb-4">
-                            <span class="text-2xl font-bold text-purple-600" id="votes-2">0</span>
-                            <span class="text-sm text-gray-500">votes</span>
-                        </div>
-                        <button onclick="castVote(2, 'Sarah Williams')" 
-                                class="vote-button w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg font-medium transition-all">
-                            Vote for Sarah
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Candidate 3 -->
-                <div class="bg-white rounded-2xl card-shadow overflow-hidden">
-                    <div class="h-48 bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
-                        <span class="text-6xl text-white">👨‍🎓</span>
-                    </div>
-                    <div class="p-6">
-                        <h4 class="text-lg font-bold text-gray-800 mb-2">Michael Chen</h4>
-                        <p class="text-gray-600 text-sm mb-4">Engineering • Final Year</p>
-                        <div class="flex items-center justify-between mb-4">
-                            <span class="text-2xl font-bold text-green-600" id="votes-3">0</span>
-                            <span class="text-sm text-gray-500">votes</span>
-                        </div>
-                        <button onclick="castVote(3, 'Michael Chen')" 
-                                class="vote-button w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium transition-all">
-                            Vote for Michael
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Vote Confirmation -->
-            <div id="voteConfirmation" class="hidden bg-green-50 border border-green-200 rounded-2xl p-6">
-                <div class="text-center">
-                    <div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span class="text-2xl text-white">✅</span>
-                    </div>
-                    <h3 class="text-xl font-bold text-green-800 mb-2">Vote Cast Successfully!</h3>
-                    <p class="text-green-700 mb-4">Your vote has been recorded on the Solana blockchain.</p>
-                    <div class="bg-white rounded-lg p-4 text-left">
-                        <div class="grid grid-cols-2 gap-4 text-sm">
-                            <div>
-                                <span class="text-gray-500">Candidate:</span>
-                                <p id="votedCandidate" class="font-medium"></p>
-                            </div>
-                            <div>
-                                <span class="text-gray-500">Transaction ID:</span>
-                                <p id="transactionId" class="font-mono text-xs break-all"></p>
-                            </div>
-                            <div>
-                                <span class="text-gray-500">Timestamp:</span>
-                                <p id="voteTimestamp" class="font-medium"></p>
-                            </div>
-                            <div>
-                                <span class="text-gray-500">Status:</span>
-                                <p class="text-green-600 font-medium">✅ Confirmed</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Admin Panel -->
-        <div id="adminPanel" class="hidden">
-            <div class="bg-white rounded-2xl card-shadow p-8">
-                <div class="flex items-center justify-between mb-8">
-                    <div>
-                        <h2 class="text-2xl font-bold text-gray-800">Admin Panel</h2>
-                        <p class="text-gray-600">Manage elections and view voting data</p>
-                    </div>
-                    <button id="closeAdminBtn" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
-                        Close
-                    </button>
-                </div>
-
-                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    <div class="bg-blue-50 rounded-lg p-4">
-                        <div class="text-2xl font-bold text-blue-600">247</div>
-                        <div class="text-sm text-blue-800">Total Votes Cast</div>
-                    </div>
-                    <div class="bg-green-50 rounded-lg p-4">
-                        <div class="text-2xl font-bold text-green-600">1,234</div>
-                        <div class="text-sm text-green-800">Registered Students</div>
-                    </div>
-                    <div class="bg-purple-50 rounded-lg p-4">
-                        <div class="text-2xl font-bold text-purple-600">3</div>
-                        <div class="text-sm text-purple-800">Active Elections</div>
-                    </div>
-                    <div class="bg-orange-50 rounded-lg p-4">
-                        <div class="text-2xl font-bold text-orange-600">89%</div>
-                        <div class="text-sm text-orange-800">Participation Rate</div>
-                    </div>
-                </div>
-
-                <div class="space-y-6">
-                    <div class="flex space-x-4">
-                        <button onclick="createElection()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium">
-                            ➕ Create Election
-                        </button>
-                        <button onclick="downloadCSV()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium">
-                            📊 Download CSV
-                        </button>
-                        <button onclick="verifyWinner()" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium">
-                            🏆 Verify Winner
-                        </button>
-                    </div>
-
-                    <!-- Election Management Table -->
-                    <div class="overflow-x-auto">
-                        <table class="w-full border-collapse border border-gray-200 rounded-lg">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="border border-gray-200 px-4 py-3 text-left text-sm font-medium text-gray-700">Election</th>
-                                    <th class="border border-gray-200 px-4 py-3 text-left text-sm font-medium text-gray-700">Status</th>
-                                    <th class="border border-gray-200 px-4 py-3 text-left text-sm font-medium text-gray-700">Votes</th>
-                                    <th class="border border-gray-200 px-4 py-3 text-left text-sm font-medium text-gray-700">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td class="border border-gray-200 px-4 py-3">Student Union President 2024</td>
-                                    <td class="border border-gray-200 px-4 py-3">
-                                        <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Active</span>
-                                    </td>
-                                    <td class="border border-gray-200 px-4 py-3">247</td>
-                                    <td class="border border-gray-200 px-4 py-3">
-                                        <button class="text-red-600 hover:text-red-800 text-sm">Delete</button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Loading Modal -->
-    <div id="loadingModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-2xl p-8 text-center">
-            <div class="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-            <h3 class="text-lg font-bold text-gray-800 mb-2">Processing Vote</h3>
-            <p class="text-gray-600">Confirming transaction on Solana blockchain...</p>
-        </div>
-    </div>
-
-    <script>
-        // Sample database simulation
-        const students = [
-            { matric: 'DE.2021/4311', name: 'John Doe', email: 'john@university.edu', department: 'Computer Science' },
-            { matric: 'DE.2021/4312', name: 'Jane Smith', email: 'jane@university.edu', department: 'Business Admin' },
-            { matric: 'DE.2021/4313', name: 'Bob Wilson', email: 'bob@university.edu', department: 'Engineering' }
-        ];
-
-        let currentUser = null;
-        let walletConnected = false;
-        let hasVoted = false;
-        let voteCount = { 1: 15, 2: 23, 3: 18 }; // Sample vote counts
-
-        // Initialize vote display
-        updateVoteDisplay();
-
-        // Matric number validation
-        document.getElementById('matricInput').addEventListener('input', function(e) {
-            const matric = e.target.value.trim();
-            const statusDiv = document.getElementById('matricStatus');
-            const connectBtn = document.getElementById('connectWalletBtn');
-            
-            if (matric.length < 3) {
-                statusDiv.className = 'mt-2 text-sm hidden';
-                connectBtn.disabled = true;
-                connectBtn.className = 'w-full bg-gray-300 text-gray-500 py-3 rounded-lg font-medium cursor-not-allowed transition-all';
-                connectBtn.textContent = '🔒 Verify Matric First';
-                return;
-            }
-
-            const student = students.find(s => s.matric === matric);
-            
-            if (student) {
-                currentUser = student;
-                statusDiv.className = 'mt-2 text-sm text-green-600';
-                statusDiv.innerHTML = `✅ Verified: ${student.name} (${student.department})`;
-                connectBtn.disabled = false;
-                connectBtn.className = 'w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition-all';
-                connectBtn.textContent = '🔗 Connect Solana Wallet';
-            } else {
-                statusDiv.className = 'mt-2 text-sm text-red-600';
-                statusDiv.innerHTML = '❌ Matriculation number not found';
-                connectBtn.disabled = true;
-                connectBtn.className = 'w-full bg-gray-300 text-gray-500 py-3 rounded-lg font-medium cursor-not-allowed transition-all';
-                connectBtn.textContent = '🔒 Invalid Matric Number';
-            }
-        });
-
-        // Wallet connection
-        document.getElementById('connectWalletBtn').addEventListener('click', async function() {
-            if (!currentUser) return;
-            
-            try {
-                // Simulate wallet connection
-                const walletAddress = generateWalletAddress();
-                
-                document.getElementById('walletInfo').classList.remove('hidden');
-                document.getElementById('walletAddress').textContent = walletAddress;
-                
-                walletConnected = true;
-                
-                // Show voting section
-                setTimeout(() => {
-                    document.getElementById('loginSection').classList.add('hidden');
-                    document.getElementById('votingSection').classList.remove('hidden');
-                }, 1000);
-                
-            } catch (error) {
-                alert('Failed to connect wallet. Please try again.');
-            }
-        });
-
-        // Vote casting function
-        async function castVote(candidateId, candidateName) {
-            if (!walletConnected) {
-                alert('Please connect your wallet first');
-                return;
-            }
-            
-            if (hasVoted) {
-                alert('You have already voted in this election');
-                return;
-            }
-
-            // Show loading modal
-            document.getElementById('loadingModal').classList.remove('hidden');
-            
-            try {
-                // Simulate blockchain transaction
-                await new Promise(resolve => setTimeout(resolve, 3000));
-                
-                // Update vote count
-                voteCount[candidateId]++;
-                updateVoteDisplay();
-                
-                // Show confirmation
-                document.getElementById('votedCandidate').textContent = candidateName;
-                document.getElementById('transactionId').textContent = generateTransactionId();
-                document.getElementById('voteTimestamp').textContent = new Date().toLocaleString();
-                
-                document.getElementById('loadingModal').classList.add('hidden');
-                document.getElementById('voteConfirmation').classList.remove('hidden');
-                
-                hasVoted = true;
-                
-                // Disable all vote buttons
-                const voteButtons = document.querySelectorAll('.vote-button');
-                voteButtons.forEach(btn => {
-                    btn.disabled = true;
-                    btn.className = btn.className.replace('bg-blue-600 hover:bg-blue-700', 'bg-gray-300');
-                    btn.className = btn.className.replace('bg-purple-600 hover:bg-purple-700', 'bg-gray-300');
-                    btn.className = btn.className.replace('bg-green-600 hover:bg-green-700', 'bg-gray-300');
-                    btn.textContent = 'Vote Cast';
-                });
-                
-            } catch (error) {
-                document.getElementById('loadingModal').classList.add('hidden');
-                alert('Failed to cast vote. Please try again.');
-            }
-        }
-
-        // Update vote display
-        function updateVoteDisplay() {
-            document.getElementById('votes-1').textContent = voteCount[1];
-            document.getElementById('votes-2').textContent = voteCount[2];
-            document.getElementById('votes-3').textContent = voteCount[3];
-            
-            const total = Object.values(voteCount).reduce((a, b) => a + b, 0);
-            document.getElementById('totalVotes').textContent = `📊 Total Votes: ${total}`;
-        }
-
-        // Admin panel functions
-        document.getElementById('adminBtn').addEventListener('click', function() {
-            document.getElementById('adminPanel').classList.remove('hidden');
-            document.getElementById('loginSection').classList.add('hidden');
-            document.getElementById('votingSection').classList.add('hidden');
-        });
-
-        document.getElementById('closeAdminBtn').addEventListener('click', function() {
-            document.getElementById('adminPanel').classList.add('hidden');
-            document.getElementById('loginSection').classList.remove('hidden');
-        });
-
-        function createElection() {
-            alert('Create Election feature would open a form to set up new elections with candidates, dates, and descriptions.');
-        }
-
-        function downloadCSV() {
-            // Simulate CSV download
-            const csvContent = "Candidate,Voter Name,Matric Number,Wallet Address,Timestamp\n" +
-                              "Alex Johnson,John Doe,DE.2021/4311,7xKs...9mNp,2024-12-10 14:30:25\n" +
-                              "Sarah Williams,Jane Smith,DE.2021/4312,8yLt...4oQr,2024-12-10 15:45:12";
-            
-            const blob = new Blob([csvContent], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'election_results.csv';
-            a.click();
-            window.URL.revokeObjectURL(url);
-        }
-
-        function verifyWinner() {
-            const maxVotes = Math.max(...Object.values(voteCount));
-            const winnerId = Object.keys(voteCount).find(key => voteCount[key] === maxVotes);
-            const candidates = ['', 'Alex Johnson', 'Sarah Williams', 'Michael Chen'];
-            
-            alert(`Winner verified: ${candidates[winnerId]} with ${maxVotes} votes. Results have been locked on the blockchain.`);
-        }
-
-        // Utility functions
-        function generateWalletAddress() {
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-            let result = '';
-            for (let i = 0; i < 44; i++) {
-                result += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            return result;
-        }
-
-        function generateTransactionId() {
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-            let result = '';
-            for (let i = 0; i < 64; i++) {
-                result += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            return result;
-        }
-
-        // Simulate real-time updates
-        setInterval(() => {
-            if (Math.random() < 0.1) { // 10% chance every 5 seconds
-                const candidateId = Math.floor(Math.random() * 3) + 1;
-                voteCount[candidateId]++;
-                updateVoteDisplay();
-            }
-        }, 5000);
-    </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96fa8c4a917ed1fe',t:'MTc1NTI4MDM3MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96fab21d6763beeb',t:'MTc1NTI4MTkxOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
