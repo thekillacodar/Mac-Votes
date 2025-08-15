@@ -86,6 +86,523 @@
 
         <!-- Voting Section -->
         <div id="votingSection" class="hidden">
+            <div id="noElectionsMessage" class="hidden text-center py-16">
+                <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <span class="text-4xl text-gray-400">📭</span>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">No Elections Available</h2>
+                <p class="text-gray-600 mb-6">There are currently no active elections. Please check back later.</p>
+                <button onclick="goBackToLogin()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium">
+                    Back to Login
+                </button>
+            </div>
+
+            <div id="activeElectionContent">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-2">Current Election</h2>
+                    <div class="flex items-center justify-center space-x-4 text-sm text-gray-600">
+                        <span id="electionStatus" class="bg-green-100 text-green-800 px-3 py-1 rounded-full font-medium">
+                            🟢 LIVE
+                        </span>
+                        <span id="totalVotes" class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-medium">
+                            📊 Total Votes: 0
+                        </span>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl card-shadow p-6 mb-8">
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Student Union President Election 2024</h3>
+                    <p class="text-gray-600 mb-4">Choose your preferred candidate for the next Student Union President. Your vote is secured on the Solana blockchain.</p>
+                    <div class="flex items-center space-x-4 text-sm text-gray-500">
+                        <span>⏰ Ends: Dec 15, 2024 11:59 PM</span>
+                        <span>🔐 Blockchain Secured</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Candidates Grid -->
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Candidate 1 -->
+                <div class="bg-white rounded-2xl card-shadow overflow-hidden">
+                    <div class="h-48 bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+                        <span class="text-6xl text-white">👨‍🎓</span>
+                    </div>
+                    <div class="p-6">
+                        <h4 class="text-lg font-bold text-gray-800 mb-2">Alex Johnson</h4>
+                        <p class="text-gray-600 text-sm mb-4">Computer Science • Final Year</p>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-2xl font-bold text-blue-600" id="votes-1">0</span>
+                            <span class="text-sm text-gray-500">votes</span>
+                        </div>
+                        <button onclick="castVote(1, 'Alex Johnson')" 
+                                class="vote-button w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition-all">
+                            Vote for Alex
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Candidate 2 -->
+                <div class="bg-white rounded-2xl card-shadow overflow-hidden">
+                    <div class="h-48 bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center">
+                        <span class="text-6xl text-white">👩‍🎓</span>
+                    </div>
+                    <div class="p-6">
+                        <h4 class="text-lg font-bold text-gray-800 mb-2">Sarah Williams</h4>
+                        <p class="text-gray-600 text-sm mb-4">Business Admin • Final Year</p>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-2xl font-bold text-purple-600" id="votes-2">0</span>
+                            <span class="text-sm text-gray-500">votes</span>
+                        </div>
+                        <button onclick="castVote(2, 'Sarah Williams')" 
+                                class="vote-button w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg font-medium transition-all">
+                            Vote for Sarah
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Candidate 3 -->
+                <div class="bg-white rounded-2xl card-shadow overflow-hidden">
+                    <div class="h-48 bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
+                        <span class="text-6xl text-white">👨‍🎓</span>
+                    </div>
+                    <div class="p-6">
+                        <h4 class="text-lg font-bold text-gray-800 mb-2">Michael Chen</h4>
+                        <p class="text-gray-600 text-sm mb-4">Engineering • Final Year</p>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-2xl font-bold text-green-600" id="votes-3">0</span>
+                            <span class="text-sm text-gray-500">votes</span>
+                        </div>
+                        <button onclick="castVote(3, 'Michael Chen')" 
+                                class="vote-button w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium transition-all">
+                            Vote for Michael
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vote Confirmation -->
+            <div id="voteConfirmation" class="hidden bg-green-50 border border-green-200 rounded-2xl p-6">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-2xl text-white">✅</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-green-800 mb-2">Vote Cast Successfully!</h3>
+                    <p class="text-green-700 mb-4">Your vote has been recorded on the Solana blockchain.</p>
+                    <div class="bg-white rounded-lg p-4 text-left">
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <span class="text-gray-500">Candidate:</span>
+                                <p id="votedCandidate" class="font-medium"></p>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Transaction ID:</span>
+                                <p id="transactionId" class="font-mono text-xs break-all"></p>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Timestamp:</span>
+                                <p id="voteTimestamp" class="font-medium"></p>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Status:</span>
+                                <p class="text-green-600 font-medium">✅ Confirmed</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Panel -->
+        <div id="adminPanel" class="hidden">
+            <div class="bg-white rounded-2xl card-shadow p-8">
+                <div class="flex items-center justify-between mb-8">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800">Admin Panel</h2>
+                        <p class="text-gray-600">Manage elections and view voting data</p>
+                    </div>
+                    <button id="closeAdminBtn" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
+                        Close
+                    </button>
+                </div>
+
+                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-blue-50 rounded-lg p-4">
+                        <div class="text-2xl font-bold text-blue-600">247</div>
+                        <div class="text-sm text-blue-800">Total Votes Cast</div>
+                    </div>
+                    <div class="bg-green-50 rounded-lg p-4">
+                        <div class="text-2xl font-bold text-green-600">1,234</div>
+                        <div class="text-sm text-green-800">Registered Students</div>
+                    </div>
+                    <div class="bg-purple-50 rounded-lg p-4">
+                        <div class="text-2xl font-bold text-purple-600">3</div>
+                        <div class="text-sm text-purple-800">Active Elections</div>
+                    </div>
+                    <div class="bg-orange-50 rounded-lg p-4">
+                        <div class="text-2xl font-bold text-orange-600">89%</div>
+                        <div class="text-sm text-orange-800">Participation Rate</div>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="flex space-x-4">
+                        <button onclick="createElection()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium">
+                            ➕ Create Election
+                        </button>
+                        <button onclick="downloadCSV()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium">
+                            📊 Download CSV
+                        </button>
+                        <button onclick="verifyWinner()" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium">
+                            🏆 Verify Winner
+                        </button>
+                    </div>
+
+                    <!-- Election Management Table -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full border-collapse border border-gray-200 rounded-lg">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="border border-gray-200 px-4 py-3 text-left text-sm font-medium text-gray-700">Election</th>
+                                    <th class="border border-gray-200 px-4 py-3 text-left text-sm font-medium text-gray-700">Status</th>
+                                    <th class="border border-gray-200 px-4 py-3 text-left text-sm font-medium text-gray-700">Votes</th>
+                                    <th class="border border-gray-200 px-4 py-3 text-left text-sm font-medium text-gray-700">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="electionTableBody">
+                                <!-- Elections will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Modal -->
+    <div id="loadingModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-2xl p-8 text-center">
+            <div class="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+            <h3 class="text-lg font-bold text-gray-800 mb-2">Processing Vote</h3>
+            <p class="text-gray-600">Confirming transaction on Solana blockchain...</p>
+        </div>
+    </div>
+
+    <script>
+        // Sample database simulation
+        const students = [
+            { matric: 'DE.2021/4311', name: 'John Doe', email: 'john@university.edu', department: 'Computer Science' },
+            { matric: 'DE.2021/4312', name: 'Jane Smith', email: 'jane@university.edu', department: 'Business Admin' },
+            { matric: 'DE.2021/4313', name: 'Bob Wilson', email: 'bob@university.edu', department: 'Engineering' },
+            { matric: 'DE.2021/0001', name: 'Admin User', email: 'admin@university.edu', department: 'Administration', isAdmin: true }
+        ];
+
+        let currentUser = null;
+        let walletConnected = false;
+        let hasVoted = false;
+        let voteCount = { 1: 15, 2: 23, 3: 18 }; // Sample vote counts
+        let isAdminAuthenticated = false;
+        let elections = [
+            { id: 1, title: 'Student Union President 2024', status: 'active', votes: 56, candidates: ['Alex Johnson', 'Sarah Williams', 'Michael Chen'] }
+        ];
+
+        // Initialize vote display
+        updateVoteDisplay();
+
+        // Matric number validation
+        document.getElementById('matricInput').addEventListener('input', function(e) {
+            const matric = e.target.value.trim();
+            const statusDiv = document.getElementById('matricStatus');
+            const connectBtn = document.getElementById('connectWalletBtn');
+            
+            if (matric.length < 3) {
+                statusDiv.className = 'mt-2 text-sm hidden';
+                connectBtn.disabled = true;
+                connectBtn.className = 'w-full bg-gray-300 text-gray-500 py-3 rounded-lg font-medium cursor-not-allowed transition-all';
+                connectBtn.textContent = '🔒 Verify Matric First';
+                return;
+            }
+
+            const student = students.find(s => s.matric === matric);
+            
+            if (student) {
+                currentUser = student;
+                statusDiv.className = 'mt-2 text-sm text-green-600';
+                statusDiv.innerHTML = `✅ Verified: ${student.name} (${student.department})`;
+                connectBtn.disabled = false;
+                connectBtn.className = 'w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition-all';
+                connectBtn.textContent = '🔗 Connect Solana Wallet';
+            } else {
+                statusDiv.className = 'mt-2 text-sm text-red-600';
+                statusDiv.innerHTML = '❌ Matriculation number not found';
+                connectBtn.disabled = true;
+                connectBtn.className = 'w-full bg-gray-300 text-gray-500 py-3 rounded-lg font-medium cursor-not-allowed transition-all';
+                connectBtn.textContent = '🔒 Invalid Matric Number';
+            }
+        });
+
+        // Wallet connection
+        document.getElementById('connectWalletBtn').addEventListener('click', async function() {
+            if (!currentUser) return;
+            
+            try {
+                // Simulate wallet connection
+                const walletAddress = generateWalletAddress();
+                
+                document.getElementById('walletInfo').classList.remove('hidden');
+                document.getElementById('walletAddress').textContent = walletAddress;
+                
+                walletConnected = true;
+                
+                // Show voting section
+                setTimeout(() => {
+                    document.getElementById('loginSection').classList.add('hidden');
+                    document.getElementById('votingSection').classList.remove('hidden');
+                }, 1000);
+                
+            } catch (error) {
+                alert('Failed to connect wallet. Please try again.');
+            }
+        });
+
+        // Vote casting function
+        async function castVote(candidateId, candidateName) {
+            if (!walletConnected) {
+                alert('Please connect your wallet first');
+                return;
+            }
+            
+            if (hasVoted) {
+                alert('You have already voted in this election');
+                return;
+            }
+
+            // Show loading modal
+            document.getElementById('loadingModal').classList.remove('hidden');
+            
+            try {
+                // Simulate blockchain transaction
+                await new Promise(resolve => setTimeout(resolve, 3000));
+                
+                // Update vote count
+                voteCount[candidateId]++;
+                updateVoteDisplay();
+                
+                // Show confirmation
+                document.getElementById('votedCandidate').textContent = candidateName;
+                document.getElementById('transactionId').textContent = generateTransactionId();
+                document.getElementById('voteTimestamp').textContent = new Date().toLocaleString();
+                
+                document.getElementById('loadingModal').classList.add('hidden');
+                document.getElementById('voteConfirmation').classList.remove('hidden');
+                
+                hasVoted = true;
+                
+                // Disable all vote buttons
+                const voteButtons = document.querySelectorAll('.vote-button');
+                voteButtons.forEach(btn => {
+                    btn.disabled = true;
+                    btn.className = btn.className.replace('bg-blue-600 hover:bg-blue-700', 'bg-gray-300');
+                    btn.className = btn.className.replace('bg-purple-600 hover:bg-purple-700', 'bg-gray-300');
+                    btn.className = btn.className.replace('bg-green-600 hover:bg-green-700', 'bg-gray-300');
+                    btn.textContent = 'Vote Cast';
+                });
+                
+            } catch (error) {
+                document.getElementById('loadingModal').classList.add('hidden');
+                alert('Failed to cast vote. Please try again.');
+            }
+        }
+
+        // Update vote display
+        function updateVoteDisplay() {
+            document.getElementById('votes-1').textContent = voteCount[1];
+            document.getElementById('votes-2').textContent = voteCount[2];
+            document.getElementById('votes-3').textContent = voteCount[3];
+            
+            const total = Object.values(voteCount).reduce((a, b) => a + b, 0);
+            document.getElementById('totalVotes').textContent = `📊 Total Votes: ${total}`;
+        }
+
+        // Admin panel functions
+        document.getElementById('adminBtn').addEventListener('click', function() {
+            if (!isAdminAuthenticated) {
+                const password = prompt('Enter admin password:');
+                if (password === 'admin123') {
+                    isAdminAuthenticated = true;
+                    showAdminPanel();
+                } else {
+                    alert('Invalid admin password!');
+                    return;
+                }
+            } else {
+                showAdminPanel();
+            }
+        });
+
+        function showAdminPanel() {
+            document.getElementById('adminPanel').classList.remove('hidden');
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('votingSection').classList.add('hidden');
+            updateElectionTable();
+        }
+
+        document.getElementById('closeAdminBtn').addEventListener('click', function() {
+            document.getElementById('adminPanel').classList.add('hidden');
+            document.getElementById('loginSection').classList.remove('hidden');
+        });
+
+        function createElection() {
+            const title = prompt('Enter election title:');
+            if (!title) return;
+            
+            const description = prompt('Enter election description:');
+            if (!description) return;
+            
+            const candidatesInput = prompt('Enter candidate names (separated by commas):');
+            if (!candidatesInput) return;
+            
+            const candidates = candidatesInput.split(',').map(c => c.trim()).filter(c => c);
+            if (candidates.length < 2) {
+                alert('Please enter at least 2 candidates');
+                return;
+            }
+            
+            const newElection = {
+                id: elections.length + 1,
+                title: title,
+                description: description,
+                status: 'active',
+                votes: 0,
+                candidates: candidates
+            };
+            
+            elections.push(newElection);
+            updateElectionTable();
+            alert('Election created successfully!');
+        }
+
+        function downloadCSV() {
+            // Simulate CSV download
+            const csvContent = "Candidate,Voter Name,Matric Number,Wallet Address,Timestamp\n" +
+                              "Alex Johnson,John Doe,DE.2021/4311,7xKs...9mNp,2024-12-10 14:30:25\n" +
+                              "Sarah Williams,Jane Smith,DE.2021/4312,8yLt...4oQr,2024-12-10 15:45:12";
+            
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'election_results.csv';
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        function verifyWinner() {
+            const maxVotes = Math.max(...Object.values(voteCount));
+            const winnerId = Object.keys(voteCount).find(key => voteCount[key] === maxVotes);
+            const candidates = ['', 'Alex Johnson', 'Sarah Williams', 'Michael Chen'];
+            
+            alert(`Winner verified: ${candidates[winnerId]} with ${maxVotes} votes. Results have been locked on the blockchain.`);
+        }
+
+        function updateElectionTable() {
+            const tbody = document.getElementById('electionTableBody');
+            tbody.innerHTML = '';
+            
+            if (elections.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="border border-gray-200 px-4 py-3 text-center text-gray-500">No elections available</td></tr>';
+                return;
+            }
+            
+            elections.forEach(election => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="border border-gray-200 px-4 py-3">${election.title}</td>
+                    <td class="border border-gray-200 px-4 py-3">
+                        <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">${election.status}</span>
+                    </td>
+                    <td class="border border-gray-200 px-4 py-3">${election.votes}</td>
+                    <td class="border border-gray-200 px-4 py-3">
+                        <button onclick="deleteElection(${election.id})" class="text-red-600 hover:text-red-800 text-sm">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function deleteElection(electionId) {
+            if (confirm('Are you sure you want to delete this election?')) {
+                elections = elections.filter(e => e.id !== electionId);
+                updateElectionTable();
+                updateVotingSection();
+                alert('Election deleted successfully!');
+            }
+        }
+
+        // Utility functions
+        function generateWalletAddress() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let result = '';
+            for (let i = 0; i < 44; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+
+        function generateTransactionId() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let result = '';
+            for (let i = 0; i < 64; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+
+        function updateVotingSection() {
+            const activeElections = elections.filter(e => e.status === 'active');
+            
+            if (activeElections.length === 0) {
+                document.getElementById('noElectionsMessage').classList.remove('hidden');
+                document.getElementById('activeElectionContent').classList.add('hidden');
+            } else {
+                document.getElementById('noElectionsMessage').classList.add('hidden');
+                document.getElementById('activeElectionContent').classList.remove('hidden');
+            }
+        }
+
+        function goBackToLogin() {
+            document.getElementById('votingSection').classList.add('hidden');
+            document.getElementById('loginSection').classList.remove('hidden');
+            // Reset user state
+            currentUser = null;
+            walletConnected = false;
+            hasVoted = false;
+            document.getElementById('matricInput').value = '';
+            document.getElementById('matricStatus').className = 'mt-2 text-sm hidden';
+            document.getElementById('walletInfo').classList.add('hidden');
+            const connectBtn = document.getElementById('connectWalletBtn');
+            connectBtn.disabled = true;
+            connectBtn.className = 'w-full bg-gray-300 text-gray-500 py-3 rounded-lg font-medium cursor-not-allowed transition-all';
+            connectBtn.textContent = '🔒 Verify Matric First';
+        }
+
+        // Initialize voting section on page load
+        updateVotingSection();
+
+        // Simulate real-time updates
+        setInterval(() => {
+            if (Math.random() < 0.1) { // 10% chance every 5 seconds
+                const candidateId = Math.floor(Math.random() * 3) + 1;
+                voteCount[candidateId]++;
+                updateVoteDisplay();
+            }
+        }, 5000);
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96fa9f4132fc8a0e',t:'MTc1NTI4MTE0Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
+        </div>
+
+        <!-- Voting Section -->
+        <div id="votingSection" class="hidden">
             <div class="text-center mb-8">
                 <h2 class="text-3xl font-bold text-gray-800 mb-2">Current Election</h2>
                 <div class="flex items-center justify-center space-x-4 text-sm text-gray-600">
