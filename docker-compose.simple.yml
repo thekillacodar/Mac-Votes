@@ -1,0 +1,41 @@
+services:
+  # Simple development environment
+  web-server:
+    image: nginx:alpine
+    container_name: mac-votes-web
+    ports:
+      - "3000:80"
+    volumes:
+      - .:/usr/share/nginx/html
+    command: nginx -g 'daemon off;'
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: mac-votes-api
+    environment:
+      - DATABASE_URL=postgresql://macvotes_user:macvotes_password@postgres:5432/macvotes
+      - PORT=8080
+      - SOLANA_RPC_URL=https://api.devnet.solana.com
+      - NODE_ENV=production
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+
+  # PostgreSQL Database (optional)
+  postgres:
+    image: postgres:15-alpine
+    container_name: mac-votes-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: macvotes
+      POSTGRES_USER: macvotes_user
+      POSTGRES_PASSWORD: macvotes_password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

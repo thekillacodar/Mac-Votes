@@ -1,0 +1,79 @@
+services:
+  # Solana Development Environment
+  solana-dev:
+    build: .
+    container_name: mac-votes-solana-dev
+    ports:
+      - "3000:3000"  # Frontend
+      - "8080:8080"  # Backend API
+    volumes:
+      - .:/app
+      - solana-config:/root/.config/solana
+      - cargo-cache:/root/.cargo
+      - node-modules:/app/node_modules
+    environment:
+      - SOLANA_RPC_URL=http://solana-test-validator:8899
+      - SOLANA_WS_URL=ws://solana-test-validator:8900
+    working_dir: /app
+    command: /bin/bash
+    stdin_open: true
+    tty: true
+    depends_on:
+      - solana-test-validator
+      - postgres
+      - redis
+
+  # Solana Test Validator (Local Blockchain)
+  solana-test-validator:
+    image: solanalabs/solana:stable
+    container_name: mac-votes-test-validator
+    ports:
+      - "8899:8899"
+      - "8900:8900"
+    command: solana-test-validator --rpc-port 8899 --ws-port 8900 --reset
+    volumes:
+      - solana-test-ledger:/root/.local/share/solana/test-ledger
+    environment:
+      - SOLANA_RPC_URL=http://localhost:8899
+      - SOLANA_WS_URL=ws://localhost:8900
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: mac-votes-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: macvotes
+      POSTGRES_USER: macvotes_user
+      POSTGRES_PASSWORD: macvotes_password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U macvotes_user -d macvotes"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching and sessions
+  redis:
+    image: redis:7-alpine
+    container_name: mac-votes-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  solana-config:
+  cargo-cache:
+  node-modules:
+  solana-test-ledger:
+  postgres-data:
+  redis-data:

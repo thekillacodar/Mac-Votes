@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Election {
+  id          Int         @id @default(autoincrement())
+  title       String
+  description String
+  level       ElectionLevel
+  status      ElectionStatus @default(ACTIVE)
+  startDate   DateTime
+  endDate     DateTime
+  candidates  Candidate[]
+}
+
+model Candidate {
+  id         Int       @id @default(autoincrement())
+  election   Election  @relation(fields: [electionId], references: [id])
+  electionId Int
+  name       String
+  department String
+  level      String
+  avatar     String
+  color      String
+  // Votes are linked via Vote.candidateId; no explicit relation needed here
+}
+
+model Vote {
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+  electionId    Int
+  candidateId   Int
+  candidateName String
+  matric        String
+  walletAddress String
+  signature     String   @unique
+  network       String
+
+  voterId Int?
+  voter   Voter?  @relation(fields: [voterId], references: [id])
+
+  @@unique([electionId, matric])
+}
+
+model User {
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+  walletAddress String   @unique
+  role          Role     @default(VIEWER)
+}
+
+model Voter {
+  id         Int      @id @default(autoincrement())
+  createdAt  DateTime @default(now())
+  name       String
+  matric     String   @unique
+  email      String?
+  department String?
+  eligible   Boolean  @default(true)
+  // Wallet and chain metadata
+  walletAddress String?  @unique
+  walletVerified Boolean  @default(false)
+  walletVerifiedAt DateTime?
+  walletNetwork  String? @default("devnet")
+  // Activity
+  lastVoteSignature String?
+  lastVoteAt        DateTime?
+
+  // Relations
+  votes     Vote[]
+}
+
+// (Vote model extended above with optional relation to Voter)
+
+enum Role {
+  ADMIN
+  VIEWER
+}
+
+enum ElectionStatus {
+  ACTIVE
+  COMPLETED
+}
+
+enum ElectionLevel {
+  UNIVERSITY
+  FACULTY
+  DEPARTMENT
+}
+
+

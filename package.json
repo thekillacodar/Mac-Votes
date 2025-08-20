@@ -1,0 +1,57 @@
+{
+  "name": "mac-votes",
+  "version": "1.0.0",
+  "description": "Blockchain-based voting system for university elections using Solana",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\" \"npm run dev:validator\"",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:validator": "solana-test-validator --rpc-port 8899 --ws-port 8900",
+    "build": "npm run build:frontend && npm run build:backend && npm run build:programs",
+    "build:frontend": "cd frontend && npm run build",
+    "build:backend": "cd backend && npm run build",
+    "build:programs": "cd programs && anchor build",
+    "deploy": "cd programs && anchor deploy",
+    "test": "npm run test:programs && npm run test:backend && npm run test:frontend",
+    "test:programs": "cd programs && anchor test",
+    "test:backend": "cd backend && npm test",
+    "test:frontend": "cd frontend && npm test",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "setup": "npm run setup:db && npm run setup:keys",
+    "setup:db": "cd database && npm run migrate",
+    "setup:keys": "solana-keygen new --outfile ~/.config/solana/id.json"
+  },
+  "keywords": [
+    "solana",
+    "blockchain",
+    "voting",
+    "elections",
+    "university",
+    "anchor",
+    "web3"
+  ],
+  "author": "Mac Votes Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "concurrently": "^8.2.2",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "@solana/web3.js": "^1.87.0",
+    "@solana/wallet-adapter-base": "^0.9.23",
+    "@solana/wallet-adapter-wallets": "^0.19.32",
+    "@solana/wallet-adapter-react": "^0.15.35",
+    "@solana/wallet-adapter-react-ui": "^0.9.34",
+    "@solana/spl-token": "^0.3.9",
+    "@project-serum/anchor": "^0.26.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  }
+}
